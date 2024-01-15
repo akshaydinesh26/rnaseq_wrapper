@@ -6,6 +6,7 @@ import shutil
 import os
 from Bio import SeqIO
 import tempfile
+import sys
 
 # arguments are transcriptome fasta and fastq file
 
@@ -48,14 +49,8 @@ def makebin(rootpath):
 
 temp_dir = tempfile.TemporaryDirectory()
 # temp_dir.cleanup()
-# To replace strings in nextflow script
-def replacestring(inFilepath,outFilepath,toReplace,replaceWith):
-   with open(inFilepath, "rt") as fin:
-      with open(outFilepath, "wt") as fout:
-         for line in fin:
-            fout.write(line.replace(toReplace , replaceWith))
 
-
+# initialize the program
 def initialize(): 
    if (checkHeader(args.transcriptomefile)):
       makebin(temp_dir)
@@ -63,6 +58,21 @@ def initialize():
       shutil.copy(args.transcriptomefile,inputpath)
       shutil.copy(args.read1,inputpath)
       shutil.copy(args.read2,inputpath)
+      currentdir = os.path.dirname(__file__)
+      fileList = ["RNAseq2.nf","fastqc.yml","kallisto.yml","multiqc.yml","nextflow.config.yml"]
+      for file in fileList:
+         currentloc = os.path.join(currentdir,file)
+         newloc =  os.path.join(temp_dir,file)
+         shutil.move(currentloc,newloc)
+   else:
+      print('Transcript Header is not Unique.', file=sys.stderr)
+
+initialize()
+
+nextflowdir=os.path.join(temp_dir)
+nextflowrun=subprocess.run(["nextflow","run","RNAseq.nf"],cwd=nextflowdir)
+
+
 
 
 
